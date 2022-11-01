@@ -23,10 +23,10 @@ export const PokemonByNamePage: NextPage<Props> = ({ pokemon }) => {
     const [isInFavorites, setisInFavorites] = useState(false);
 
     useEffect(() => {
-      setisInFavorites(localFavorites.existInFavorites(pokemon.id))
+        setisInFavorites(localFavorites.existInFavorites(pokemon.id))
 
     }, [])
-    
+
 
     // console.log(pokemon);
 
@@ -124,13 +124,13 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
     // const pokemons151 = [...Array(151)].map((value, index) => `${index + 1}`);
 
     const { data } = await pokeApi.get<PokemonListResponse>('pokemon?limit=151');
-    const pokemonNames: string[] = data.results.map( pokemon => pokemon.name );
+    const pokemonNames: string[] = data.results.map(pokemon => pokemon.name);
 
     return {
         paths: pokemonNames.map(name => ({
             params: { name }
         })),
-        fallback: false
+        fallback: 'blocking'
     }
 }
 
@@ -145,11 +145,23 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     //     name: data.name,
     //     sprites: data.sprites
     // }
-    
+
+    const pokemon = await getPokemonInfo(name);
+
+    if (!pokemon) {
+        return {
+            redirect: {
+                destination: '/',
+                permanent: false
+            }
+        }
+    }
+
     return {
         props: {
-            pokemon: await getPokemonInfo( name )
-        }
+            pokemon
+        },
+        revalidate: 86400, //60 * 60 * 24
     }
 }
 
